@@ -1,13 +1,83 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>dashboard</ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>Dashboard</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">dashboard</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="ion-padding">
+
+  <!-- 🔹 Seletor de data -->
+  <div class="filtro-container">
+    <ion-item lines="none">
+      <ion-label position="stacked">Selecione o dia</ion-label>
+      <ion-datetime
+        presentation="date"
+        [(ngModel)]="dataSelecionada"
+        (ionChange)="aoMudarData($event)">
+      </ion-datetime>
+    </ion-item>
+  </div>
+
+  <!-- 🔄 CONTROLES DE AUTO-REFRESH -->
+  <div class="controles-refresh">
+    <div class="status-refresh">
+      <ion-icon [name]="autoRefreshAtivo ? 'sync-circle' : 'pause-circle'" 
+                [class.ativo]="autoRefreshAtivo"></ion-icon>
+      <span>{{ autoRefreshAtivo ? 'Atualizando automaticamente' : 'Atualização pausada' }}</span>
+    </div>
+    
+    <div class="botoes-refresh">
+      <ion-button size="small" (click)="toggleAutoRefresh()" [color]="autoRefreshAtivo ? 'warning' : 'success'">
+        <ion-icon [name]="autoRefreshAtivo ? 'pause' : 'play'" slot="start"></ion-icon>
+        {{ autoRefreshAtivo ? 'Pausar' : 'Retomar' }}
+      </ion-button>
+      
+      <ion-button size="small" (click)="atualizarManualmente()" color="primary">
+        <ion-icon name="refresh" slot="start"></ion-icon>
+        Atualizar Agora
+      </ion-button>
+    </div>
+    
+    <div class="tempo-atualizacao">
+      <label>Atualizar a cada:</label>
+      <ion-segment [(ngModel)]="tempoAtualizacao">
+        <ion-segment-button [value]="5000" (click)="alterarTempoAtualizacao(5)">5s</ion-segment-button>
+        <ion-segment-button [value]="10000" (click)="alterarTempoAtualizacao(10)">10s</ion-segment-button>
+        <ion-segment-button [value]="30000" (click)="alterarTempoAtualizacao(30)">30s</ion-segment-button>
+        <ion-segment-button [value]="60000" (click)="alterarTempoAtualizacao(60)">1min</ion-segment-button>
+      </ion-segment>
+    </div>
+  </div>
+
+  <!-- 🔹 Spinner de carregamento -->
+  <ion-spinner *ngIf="carregando" name="crescent" class="spinner"></ion-spinner>
+
+  <!-- 🔹 Card com todos os dados ou do dia -->
+  <div *ngIf="!carregando && historico.length > 0; else semHistorico" class="cards-container">
+    <div *ngFor="let dado of historico; let i = index" class="card-dia">
+      <h2>#{{ i + 1 }} — {{ dado.timestamp || dado.createdAt }}</h2>
+      <div class="info-linha">
+        <span class="label">Temperatura:</span>
+        <span class="valor">{{ dado.temperatura }} °C</span>
+      </div>
+      <div class="info-linha">
+        <span class="label">Umidade:</span>
+        <span class="valor">{{ dado.umidade }} %</span>
+      </div>
+      <div class="info-linha">
+        <span class="label">Status da Bomba:</span>
+        <span class="valor">{{ dado.status_bomba ? 'Ligada' : 'Desligada' }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📊 GRÁFICO -->
+  <div class="grafico-container" *ngIf="!carregando && historico.length > 0">
+    <h2>📈 Gráfico de Temperatura e Umidade</h2>
+    <canvas id="graficoHistorico"></canvas>
+  </div>
+
+  <ng-template #semHistorico>
+    <p class="sem-dados">Nenhum dado encontrado.</p>
+  </ng-template>
 </ion-content>
